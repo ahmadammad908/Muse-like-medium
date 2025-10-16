@@ -1,14 +1,19 @@
+// app/page.js
 "use client"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useCallback } from "react"
 import { X } from "lucide-react"
 import Image from "next/image"
+import { signInWithGoogle } from "../../../lib/firebase"
+import { useRouter } from "next/navigation"
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSignInOpen, setIsSignInOpen] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(true) // true for sign up, false for sign in
+  const [isSignUp, setIsSignUp] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(prev => !prev)
@@ -20,12 +25,12 @@ export default function LandingPage() {
 
   const openSignIn = useCallback(() => {
     setIsSignInOpen(true)
-    setIsSignUp(true) // Default to sign up
+    setIsSignUp(true)
   }, [])
 
   const openSignInForm = useCallback(() => {
     setIsSignInOpen(true)
-    setIsSignUp(false) // Switch to sign in
+    setIsSignUp(false)
   }, [])
 
   const closeSignIn = useCallback(() => {
@@ -40,6 +45,38 @@ export default function LandingPage() {
     setIsSignUp(true)
   }, [])
 
+  // Improved Google Sign In function
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true)
+      const result = await signInWithGoogle()
+      const user = result.user
+      
+      // Check if user is new using multiple methods
+      const isNewUser = 
+        user.metadata.creationTime === user.metadata.lastSignInTime ||
+        !localStorage.getItem(`user_${user.uid}_profile_completed`)
+      
+      if (isNewUser) {
+        // Mark user as new in localStorage
+        localStorage.setItem(`user_${user.uid}_profile_completed`, 'false')
+        // Redirect new users to profile completion
+        router.push("/profile-completion")
+      } else {
+        // Mark user as returning
+        localStorage.setItem(`user_${user.uid}_profile_completed`, 'true')
+        // Redirect existing users directly to dashboard
+        router.push("/dashboard")
+      }
+      
+    } catch (error) {
+      console.error("Google sign in error:", error)
+      alert("Sign in failed. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const navLinks = [
     { href: "#", label: "Our story" },
     { href: "#", label: "Membership" },
@@ -47,7 +84,7 @@ export default function LandingPage() {
     { href: "#", label: "Sign in", onClick: openSignInForm }
   ]
 
-  const footerLinks = ["Help", "Status", "About", "Careers", "Blog", "Privacy", "Terms"]
+  const footerLinks = ["Help", "Status", "About", "Careers", "Blog", "Privacy", "Terms", "Text to speech", "Teams"]
 
   const signUpOptions = [
     { 
@@ -57,10 +94,11 @@ export default function LandingPage() {
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43-.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
-      )
+      ),
+      onClick: handleGoogleSignIn
     },
     { 
       id: "facebook", 
@@ -69,7 +107,18 @@ export default function LandingPage() {
         <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
         </svg>
-      )
+      ),
+      onClick: () => alert("Facebook sign up coming soon!")
+    },
+    { 
+      id: "email", 
+      label: "Sign up with Email", 
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        </svg>
+      ),
+      onClick: () => alert("Email sign up coming soon!")
     }
   ]
 
@@ -81,10 +130,11 @@ export default function LandingPage() {
         <svg className="w-5 h-5" viewBox="0 0 24 24">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
           <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43-.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
         </svg>
-      )
+      ),
+      onClick: handleGoogleSignIn
     },
     { 
       id: "facebook-signin", 
@@ -93,7 +143,18 @@ export default function LandingPage() {
         <svg className="w-5 h-5" fill="#1877F2" viewBox="0 0 24 24">
           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
         </svg>
-      )
+      ),
+      onClick: () => alert("Facebook sign in coming soon!")
+    },
+    { 
+      id: "email-signin", 
+      label: "Sign in with Email", 
+      icon: (
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+        </svg>
+      ),
+      onClick: () => alert("Email sign in coming soon!")
     }
   ]
 
@@ -102,10 +163,8 @@ export default function LandingPage() {
       {/* Navbar */}
       <header className="w-full fixed top-0 left-0 right-0 z-50 bg-[#F6F2EE] backdrop-blur-md border-b border-black">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          {/* Logo */}
           <div className="text-2xl font-serif font-bold text-slate-900">Inkspire</div>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6 text-sm">
             {navLinks.map((link) => (
               link.onClick ? (
@@ -127,7 +186,6 @@ export default function LandingPage() {
               )
             ))}
 
-            {/* CTA Button */}
             <button
               onClick={openSignIn}
               className="bg-black text-white rounded-full px-4 py-2 text-sm hover:bg-slate-800 transition-colors duration-200 font-medium"
@@ -136,7 +194,6 @@ export default function LandingPage() {
             </button>
           </nav>
 
-          {/* Mobile Menu Button */}
           <button
             onClick={toggleMenu}
             className="md:hidden flex flex-col space-y-1.5 w-6 h-6 focus:outline-none"
@@ -157,7 +214,6 @@ export default function LandingPage() {
           </button>
         </div>
 
-        {/* Mobile Menu Overlay */}
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
@@ -198,7 +254,6 @@ export default function LandingPage() {
                   )
                 ))}
 
-                {/* Mobile CTA Button */}
                 <button
                   onClick={() => {
                     closeMenu()
@@ -220,7 +275,6 @@ export default function LandingPage() {
                    max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 lg:py-0 gap-8 sm:gap-10 lg:gap-12 
                    text-center lg:text-left min-h-[calc(100vh-80px)] mt-16 lg:mt-0"
       >
-        {/* Text Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -246,7 +300,6 @@ export default function LandingPage() {
           </div>
         </motion.div>
 
-        {/* Animated Illustration - Hidden on mobile */}
         <motion.div
           className="relative hidden lg:flex justify-center lg:justify-end w-full lg:w-1/2"
           initial={{ opacity: 0, x: 40 }}
@@ -262,7 +315,6 @@ export default function LandingPage() {
             loading="lazy"
           />
 
-          {/* Floating light animation */}
           <motion.div
             className="absolute top-16 right-10 w-3 h-3 bg-yellow-400 rounded-full blur-[2px]"
             animate={{ opacity: [0.4, 1, 0.4], scale: [1, 1.5, 1] }}
@@ -271,7 +323,6 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-black mt-auto">
         <div className="max-w-7xl mx-auto px-6 py-6 text-sm text-slate-600 flex flex-wrap justify-center gap-6">
           {footerLinks.map((link) => (
@@ -282,7 +333,6 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* Sign In/Sign Up Popup */}
       <AnimatePresence>
         {isSignInOpen && (
           <motion.div
@@ -300,7 +350,6 @@ export default function LandingPage() {
               className="bg-gradient-to-br from-white to-slate-50 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header with gradient */}
               <div className="bg-gradient-to-r from-slate-900 to-slate-700 p-8 text-white">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-3xl ">
@@ -320,14 +369,15 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              {/* Sign in/up options */}
               <div className="p-8 space-y-4">
                 {(isSignUp ? signUpOptions : signInOptions).map((option) => (
                   <motion.button
                     key={option.id}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex items-center space-x-4 p-4 border-2 border-slate-200 rounded-xl hover:border-slate-300 hover:bg-white transition-all duration-200 w-full text-left group shadow-sm"
+                    onClick={option.onClick}
+                    disabled={isLoading}
+                    className="flex items-center space-x-4 p-4 border-2 border-slate-200 rounded-xl hover:border-slate-300 hover:bg-white transition-all duration-200 w-full text-left group shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center justify-center w-6 h-6">
                       {option.icon}
@@ -340,7 +390,6 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              {/* Footer with switch option */}
               <div className="p-6 bg-slate-50/80 border-t border-slate-200">
                 <div className="text-center text-slate-600">
                   {isSignUp ? (
