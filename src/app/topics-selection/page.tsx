@@ -6,7 +6,7 @@ import { auth } from "../../../lib/firebase"
 import { Check } from "lucide-react"
 
 export default function TopicsSelection() {
-  // ✅ Explicitly type this as string[]
+  // ✅ Explicitly type as string[]
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -20,7 +20,6 @@ export default function TopicsSelection() {
     return () => unsubscribe()
   }, [router])
 
-  // ✅ Type topic as string
   const allTopics: string[] = [
     "Programming", "Data Science", "Technology", "Self Improvement", "Writing",
     "Relationships", "Machine Learning", "Productivity", "Politics", "Cryptocurrency",
@@ -32,11 +31,11 @@ export default function TopicsSelection() {
     "Android", "Apple", "Women"
   ]
 
-  // ✅ Add type annotation to `topic`
+  // ✅ Add parameter type
   const toggleTopic = (topic: string) => {
-    setSelectedTopics(prev =>
+    setSelectedTopics((prev) =>
       prev.includes(topic)
-        ? prev.filter(t => t !== topic)
+        ? prev.filter((t) => t !== topic)
         : [...prev, topic]
     )
   }
@@ -45,10 +44,14 @@ export default function TopicsSelection() {
     if (selectedTopics.length >= 5) {
       setIsLoading(true)
       try {
-        // Here you can save to Firebase
-        console.log("Selected topics:", selectedTopics)
+        const user = auth.currentUser
+        if (user) {
+          localStorage.setItem(`user_${user.uid}_topics_selected`, "true")
+          localStorage.setItem(`user_${user.uid}_topics`, JSON.stringify(selectedTopics))
+        }
 
-        router.push("./dashboard")
+        console.log("Selected topics:", selectedTopics)
+        router.push("/dashboard")
       } catch (error) {
         console.error("Error saving topics:", error)
         alert("Error saving topics. Please try again.")
@@ -68,7 +71,6 @@ export default function TopicsSelection() {
         transition={{ duration: 0.5 }}
         className="max-w-4xl w-full bg-white rounded-3xl shadow-lg p-8"
       >
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-serif font-bold text-slate-900 mb-4">
             What are you interested in?
@@ -78,9 +80,8 @@ export default function TopicsSelection() {
           </p>
         </div>
 
-        {/* Topics Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-8">
-          {allTopics.map((topic: string) => {
+          {allTopics.map((topic) => {
             const isSelected = selectedTopics.includes(topic)
             return (
               <motion.button
@@ -111,7 +112,6 @@ export default function TopicsSelection() {
           })}
         </div>
 
-        {/* Selected Count & Continue Button */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-200">
           <div className="text-slate-600">
             {selectedTopics.length >= 5 ? (

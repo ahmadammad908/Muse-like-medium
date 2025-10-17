@@ -1,11 +1,10 @@
-// app/page.js
 "use client"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { X } from "lucide-react"
 import Image from "next/image"
-import { signInWithGoogle } from "../../../lib/firebase"
+import { signInWithGoogle, auth } from "../../../lib/firebase"
 import { useRouter } from "next/navigation"
 
 export default function LandingPage() {
@@ -14,6 +13,22 @@ export default function LandingPage() {
   const [isSignUp, setIsSignUp] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        const profileCompleted = localStorage.getItem(`user_${user.uid}_profile_completed`)
+        
+        if (profileCompleted === 'true') {
+          router.push("/dashboard")
+        } else if (profileCompleted === 'false') {
+          router.push("/profile-completion")
+        }
+      }
+    })
+
+    return () => unsubscribe()
+  }, [router])
 
   const toggleMenu = useCallback(() => {
     setIsMenuOpen(prev => !prev)
@@ -45,27 +60,21 @@ export default function LandingPage() {
     setIsSignUp(true)
   }, [])
 
-  // Improved Google Sign In function
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true)
       const result = await signInWithGoogle()
       const user = result.user
       
-      // Check if user is new using multiple methods
       const isNewUser = 
         user.metadata.creationTime === user.metadata.lastSignInTime ||
         !localStorage.getItem(`user_${user.uid}_profile_completed`)
       
       if (isNewUser) {
-        // Mark user as new in localStorage
         localStorage.setItem(`user_${user.uid}_profile_completed`, 'false')
-        // Redirect new users to profile completion
         router.push("/profile-completion")
       } else {
-        // Mark user as returning
         localStorage.setItem(`user_${user.uid}_profile_completed`, 'true')
-        // Redirect existing users directly to dashboard
         router.push("/dashboard")
       }
       

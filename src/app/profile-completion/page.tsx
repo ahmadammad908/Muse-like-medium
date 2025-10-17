@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, FormEvent } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { auth, updateUserProfile } from "../../../lib/firebase"
 import { motion } from "framer-motion"
@@ -25,30 +25,35 @@ export default function ProfileCompletion() {
     return () => unsubscribe()
   }, [router])
 
-  // 👇 Add correct event type here
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
+ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault()
+  setIsLoading(true)
 
-    try {
-      await updateUserProfile({
-        displayName: fullName
-      })
+  try {
+    await updateUserProfile({
+      displayName: fullName
+    })
+
+    const user = auth.currentUser
+    if (user) {
+      localStorage.setItem(`user_${user.uid}_profile_completed`, 'true')
 
       console.log("Profile completed:", {
         fullName,
         email,
-        uid: auth.currentUser?.uid
+        uid: user.uid
       })
-      
-      router.push("/topics-selection")
-    } catch (error) {
-      console.error("Error saving profile:", error)
-      alert("Error completing profile. Please try again.")
-    } finally {
-      setIsLoading(false)
     }
+
+    router.push("/topics-selection")
+  } catch (error) {
+    console.error("Error saving profile:", error)
+    alert("Error completing profile. Please try again.")
+  } finally {
+    setIsLoading(false)
   }
+}
+
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -59,13 +64,13 @@ export default function ProfileCompletion() {
         className="max-w-md w-full"
       >
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-serif font-bold text-black mb-2">Medium</h1>
+          <h1 className="text-4xl font-serif font-bold text-black mb-2">Inkspire</h1>
         </div>
 
         <div className="bg-white border border-gray-300 rounded-lg p-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-serif font-normal text-black mb-2">
-              Welcome to Medium!
+              Welcome to Inkspire!
             </h2>
             <p className="text-gray-600 text-base leading-relaxed">
               Finish creating your account so that you can upgrade to membership.
