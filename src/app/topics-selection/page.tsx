@@ -67,11 +67,7 @@ export default function TopicsSelection() {
           <div className="flex flex-col items-center mb-3">
             {/* ✅ Enlarged, centered, and fitted image inside circle */}
             <div className="w-20 h-20 border border-black rounded-full flex items-center justify-center overflow-hidden">
-              <img
-                src="https://miro.medium.com/v2/da:true/dd29a272114329235250c56fa5703c380976bfb8402146a584e65476d78eece6"
-                alt="Interest Icon"
-                className="object-cover w-full h-full"
-              />
+              
             </div>
           </div>
           <h1 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-2">

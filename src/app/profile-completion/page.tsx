@@ -258,7 +258,7 @@ export default function ProfileCompletion() {
               <label htmlFor="profilePic" className="cursor-pointer group relative">
                 <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-300 group-hover:border-gray-400 transition-colors">
                   {profileImage ? (
-                    <img
+                    <Image
                       src={profileImage}
                       alt="Profile Preview"
                       className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
