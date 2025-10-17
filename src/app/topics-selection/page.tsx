@@ -3,19 +3,15 @@ import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { auth } from "../../../lib/firebase"
-import { Check } from "lucide-react"
 
 export default function TopicsSelection() {
-  // ✅ Explicitly type as string[]
   const [selectedTopics, setSelectedTopics] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (!user) {
-        router.push("/")
-      }
+      if (!user) router.push("/")
     })
     return () => unsubscribe()
   }, [router])
@@ -26,12 +22,11 @@ export default function TopicsSelection() {
     "Psychology", "Money", "Business", "Python", "Health", "Science", "Mental Health",
     "Life", "Software Development", "Startup", "Design", "JavaScript", "Artificial Intelligence",
     "Culture", "Software Engineering", "Blockchain", "Coding", "Entrepreneurship", "React",
-    "UK", "Education", "History", "Number", "Web Development", "Work", "Ultralife",
-    "Society", "Deep Learning", "Marketing", "Books", "HR", "Social Media", "Leadership",
-    "Android", "Apple", "Women"
+    "UX", "Education", "History", "Humor", "Web Development", "Work", "Lifestyle",
+    "Society", "Deep Learning", "Marketing", "Books", "NFT", "Social Media", "Leadership",
+    "Android", "Apple", "Women", "Mindfulness", "Sexuality"
   ]
 
-  // ✅ Add parameter type
   const toggleTopic = (topic: string) => {
     setSelectedTopics((prev) =>
       prev.includes(topic)
@@ -41,7 +36,7 @@ export default function TopicsSelection() {
   }
 
   const handleContinue = async () => {
-    if (selectedTopics.length >= 5) {
+    if (selectedTopics.length >= 3) {
       setIsLoading(true)
       try {
         const user = auth.currentUser
@@ -49,95 +44,80 @@ export default function TopicsSelection() {
           localStorage.setItem(`user_${user.uid}_topics_selected`, "true")
           localStorage.setItem(`user_${user.uid}_topics`, JSON.stringify(selectedTopics))
         }
-
-        console.log("Selected topics:", selectedTopics)
         router.push("/dashboard")
       } catch (error) {
-        console.error("Error saving topics:", error)
         alert("Error saving topics. Please try again.")
       } finally {
         setIsLoading(false)
       }
     } else {
-      alert("Please select at least 5 topics to continue")
+      alert("Please select at least 3 topics to continue")
     }
   }
 
   return (
-    <main className="min-h-screen bg-[#F6F2EE] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-[#F6F2EE] flex items-center justify-center px-4 py-12">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-4xl w-full bg-white rounded-3xl shadow-lg p-8"
+        className="w-full max-w-5xl rounded-3xl p-6 md:p-10 relative bg-white shadow-md"
       >
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-serif font-bold text-slate-900 mb-4">
+          <div className="flex flex-col items-center mb-3">
+            {/* ✅ Enlarged, centered, and fitted image inside circle */}
+            <div className="w-20 h-20 border border-black rounded-full flex items-center justify-center overflow-hidden">
+              <img
+                src="https://miro.medium.com/v2/da:true/dd29a272114329235250c56fa5703c380976bfb8402146a584e65476d78eece6"
+                alt="Interest Icon"
+                className="object-cover w-full h-full"
+              />
+            </div>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-2">
             What are you interested in?
           </h1>
-          <p className="text-lg text-slate-600">
+          <p className="text-base md:text-lg text-slate-600">
             Choose three or more.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-8">
+        {/* ✅ Topics Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-28 md:mb-12">
           {allTopics.map((topic) => {
             const isSelected = selectedTopics.includes(topic)
             return (
               <motion.button
                 key={topic}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => toggleTopic(topic)}
-                className={`
-                  relative p-4 rounded-xl border-2 text-left transition-all duration-200
-                  ${isSelected
-                    ? "bg-black text-white border-black"
-                    : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                  }
-                `}
+                className={`px-4 py-2 rounded-full border text-sm font-medium transition-all duration-200 ${
+                  isSelected
+                    ? "bg-black border-black text-white"
+                    : "bg-white border-slate-300 text-slate-700 hover:border-slate-400"
+                }`}
               >
-                <span className="font-medium text-sm">{topic}</span>
-                {isSelected && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-2 right-2"
-                  >
-                    <Check className="w-4 h-4" />
-                  </motion.div>
-                )}
+                {topic}
               </motion.button>
             )
           })}
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-200">
-          <div className="text-slate-600">
-            {selectedTopics.length >= 5 ? (
-              <span className="text-green-600 font-medium">✓ Ready to continue</span>
-            ) : (
-              <span>
-                Select {5 - selectedTopics.length} more topic
-                {5 - selectedTopics.length !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-
+        {/* ✅ Fixed Continue button on mobile */}
+        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-4 flex items-center justify-center md:static md:border-0 md:p-0 md:mt-6">
           <motion.button
-            whileHover={{ scale: selectedTopics.length >= 5 ? 1.02 : 1 }}
-            whileTap={{ scale: selectedTopics.length >= 5 ? 0.98 : 1 }}
+            whileHover={{ scale: selectedTopics.length >= 3 ? 1.02 : 1 }}
+            whileTap={{ scale: selectedTopics.length >= 3 ? 0.98 : 1 }}
             onClick={handleContinue}
-            disabled={selectedTopics.length < 5 || isLoading}
-            className={`
-              px-8 py-3 rounded-full font-medium transition-all duration-200
-              ${selectedTopics.length >= 5
-                ? "bg-black text-white hover:bg-slate-800 cursor-pointer"
+            disabled={selectedTopics.length < 3 || isLoading}
+            className={`w-full sm:w-auto px-8 py-3 rounded-full font-medium transition-all duration-200 ${
+              selectedTopics.length >= 3
+                ? "bg-black text-white hover:bg-slate-800"
                 : "bg-slate-200 text-slate-500 cursor-not-allowed"
-              }
-            `}
+            }`}
           >
-            {isLoading ? "Saving..." : "Continue to Dashboard"}
+            {isLoading ? "Saving..." : "Continue"}
           </motion.button>
         </div>
       </motion.div>
